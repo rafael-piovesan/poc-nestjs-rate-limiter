@@ -119,8 +119,8 @@ export class RateLimiterGuard implements CanActivate {
     return true;
   }
 
-  protected getTracker(request: Record<string, any>): string {
-    return request.ip?.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/)?.[0];
+  protected getTracker(req: Record<string, any>): string {
+    return req.ip?.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/)?.[0];
   }
 
   private httpHandler(context: ExecutionContext) {
@@ -131,20 +131,15 @@ export class RateLimiterGuard implements CanActivate {
   }
 
   private async setResponseHeaders(
-    response: any,
+    res: any,
     points: number,
-    rateLimiterResponse: RateLimiterRes,
+    limiterRes: RateLimiterRes,
   ) {
-    response.header(
-      'Retry-After',
-      Math.ceil(rateLimiterResponse.msBeforeNext / 1000),
-    );
-    response.header('X-RateLimit-Limit', points);
-    response.header('X-Retry-Remaining', rateLimiterResponse.remainingPoints);
-    response.header(
-      'X-Retry-Reset',
-      new Date(Date.now() + rateLimiterResponse.msBeforeNext).toUTCString(),
-    );
+    const reset = new Date(Date.now() + limiterRes.msBeforeNext).toUTCString();
+    res.header('Retry-After', Math.ceil(limiterRes.msBeforeNext / 1000));
+    res.header('X-RateLimit-Limit', points);
+    res.header('X-Retry-Remaining', limiterRes.remainingPoints);
+    res.header('X-Retry-Reset', reset);
   }
 
   private async responseHandler(
@@ -154,9 +149,9 @@ export class RateLimiterGuard implements CanActivate {
     points: number,
   ) {
     try {
-      const rateLimiterResponse = await rateLimiter.consume(key);
+      const limiterRes = await rateLimiter.consume(key);
       if (!this.options.omitResponseHeaders) {
-        this.setResponseHeaders(response, points, rateLimiterResponse);
+        this.setResponseHeaders(response, points, limiterRes);
       }
     } catch (rateLimiterResponse) {
       response.header(
