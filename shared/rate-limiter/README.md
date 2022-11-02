@@ -1,5 +1,5 @@
 # Rate Limiter Module
-This is a stripped down version of [ozkanonur/nestjs-rate-limiter](https://github.com/ozkanonur/nestjs-rate-limiter) (which is no longer maintained). Check it out for more details and insights on the decisions that have been made.
+This is a stripped down version of [ozkanonur/nestjs-rate-limiter](https://github.com/ozkanonur/nestjs-rate-limiter) (which is no longer maintained). Check it out for more details and insights on the decisions that have been made. Some features and implementation details were also replicated from NestJS official Throttler Module, which can be found at [nestjs/throttler](https://github.com/nestjs/throttler).
 
 The main focus of this module is to just provide a thin wrapper on top of [animir/node-rate-limiter-flexible](https://github.com/animir/node-rate-limiter-flexible), a mature and flexible rate limiting library for NodeJS that offers many interesting features, and to name a few:
 - different types of storage
