@@ -22,7 +22,6 @@ import { RATE_LIMITER_METADATA } from './rate-limiter.constants';
 @Injectable()
 export class RateLimiterGuard implements CanActivate {
   private rateLimiters: Map<string, RateLimiterAbstract> = new Map();
-  private specificOptions: RateLimiterOptions;
 
   constructor(
     @Inject('RATE_LIMITER_OPTIONS') private options: RateLimiterOptions,
@@ -33,7 +32,6 @@ export class RateLimiterGuard implements CanActivate {
     options?: RateLimiterOptions,
   ): Promise<RateLimiterAbstract> {
     this.options = { ...defaultRateLimiterOptions, ...this.options };
-    this.specificOptions = options;
 
     const opts: RateLimiterOptions = {
       ...this.options,
@@ -44,21 +42,13 @@ export class RateLimiterGuard implements CanActivate {
       opts.keyPrefix = `${opts.globalPrefix}:${opts.keyPrefix}`;
     }
 
-    let rateLimiter: RateLimiterAbstract = this.rateLimiters.get(
-      opts.keyPrefix,
-    );
-
-    if (opts.execEvenlyMinDelayMs === undefined) {
-      opts.execEvenlyMinDelayMs =
-        (this.options.duration * 1000) / this.options.points;
-    }
+    let rateLimiter = this.rateLimiters.get(opts.keyPrefix);
 
     if (!rateLimiter) {
-      const logger = this.specificOptions?.logger || this.options.logger;
-      switch (this.specificOptions?.type || this.options.type) {
+      switch (this.options.type) {
         case 'Memory':
           rateLimiter = new RateLimiterMemory(opts);
-          if (logger) {
+          if (this.options.logger) {
             Logger.log(
               `Rate Limiter started with ${opts.keyPrefix} key prefix`,
               'RateLimiterMemory',
@@ -78,7 +68,7 @@ export class RateLimiterGuard implements CanActivate {
             });
           }
           rateLimiter = new RateLimiterRedis(opts as IRateLimiterStoreOptions);
-          if (logger) {
+          if (this.options.logger) {
             Logger.log(
               `Rate Limiter started with ${opts.keyPrefix} key prefix`,
               'RateLimiterRedis',
@@ -105,19 +95,13 @@ export class RateLimiterGuard implements CanActivate {
       [handler, classRef],
     );
 
-    const points =
-      opts?.points || this.specificOptions?.points || this.options.points;
-
-    const pointsConsumed =
-      opts?.pointsConsumed ||
-      this.specificOptions?.pointsConsumed ||
-      this.options.pointsConsumed;
+    const points = opts?.points || this.options.points;
 
     const { req, res } = this.httpHandler(context);
     const rateLimiter = await this.getRateLimiter(opts);
     const key = this.getTracker(req);
 
-    await this.responseHandler(res, key, rateLimiter, points, pointsConsumed);
+    await this.responseHandler(res, key, rateLimiter, points);
     return true;
   }
 
@@ -154,18 +138,10 @@ export class RateLimiterGuard implements CanActivate {
     key: any,
     rateLimiter: RateLimiterAbstract,
     points: number,
-    pointsConsumed: number,
   ) {
     try {
-      const rateLimiterResponse: RateLimiterRes = await rateLimiter.consume(
-        key,
-        pointsConsumed,
-      );
-      const omitHeaders =
-        this.specificOptions?.omitResponseHeaders ||
-        this.options.omitResponseHeaders;
-
-      if (!omitHeaders) {
+      const rateLimiterResponse = await rateLimiter.consume(key);
+      if (!this.options.omitResponseHeaders) {
         this.setResponseHeaders(response, points, rateLimiterResponse);
       }
     } catch (rateLimiterResponse) {
@@ -173,20 +149,14 @@ export class RateLimiterGuard implements CanActivate {
         'Retry-After',
         Math.ceil(rateLimiterResponse.msBeforeNext / 1000),
       );
-      if (
-        typeof this.specificOptions?.customResponseSchema === 'function' ||
-        typeof this.options.customResponseSchema === 'function'
-      ) {
-        const errorBody =
-          this.specificOptions?.customResponseSchema ||
-          this.options.customResponseSchema;
+      if (typeof this.options.customResponseSchema === 'function') {
         throw new HttpException(
-          errorBody(rateLimiterResponse),
+          this.options.customResponseSchema(rateLimiterResponse),
           HttpStatus.TOO_MANY_REQUESTS,
         );
       } else {
         throw new HttpException(
-          this.specificOptions?.errorMessage || this.options.errorMessage,
+          this.options.errorMessage,
           HttpStatus.TOO_MANY_REQUESTS,
         );
       }
