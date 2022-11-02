@@ -1,5 +1,6 @@
 import { Module, DynamicModule, Provider } from '@nestjs/common';
 import { defaultRateLimiterOptions } from './default-options';
+import { RATE_LIMITER_OPTIONS } from './rate-limiter.constants';
 import {
   RateLimiterOptions,
   RateLimiterModuleAsyncOptions,
@@ -7,9 +8,9 @@ import {
 } from './rate-limiter.interface';
 
 @Module({
-  exports: ['RATE_LIMITER_OPTIONS'],
+  exports: [RATE_LIMITER_OPTIONS],
   providers: [
-    { provide: 'RATE_LIMITER_OPTIONS', useValue: defaultRateLimiterOptions },
+    { provide: RATE_LIMITER_OPTIONS, useValue: defaultRateLimiterOptions },
   ],
 })
 export class RateLimiterModule {
@@ -18,7 +19,7 @@ export class RateLimiterModule {
   ): DynamicModule {
     return {
       module: RateLimiterModule,
-      providers: [{ provide: 'RATE_LIMITER_OPTIONS', useValue: options }],
+      providers: [{ provide: RATE_LIMITER_OPTIONS, useValue: options }],
     };
   }
 
@@ -53,13 +54,13 @@ export class RateLimiterModule {
   ): Provider {
     if (options.useFactory) {
       return {
-        provide: 'RATE_LIMITER_OPTIONS',
+        provide: RATE_LIMITER_OPTIONS,
         useFactory: options.useFactory,
         inject: options.inject || [],
       };
     }
     return {
-      provide: 'RATE_LIMITER_OPTIONS',
+      provide: RATE_LIMITER_OPTIONS,
       useFactory: async (optionsFactory: RateLimiterOptionsFactory) =>
         optionsFactory.createRateLimiterOptions(),
       inject: [options.useExisting || options.useClass],

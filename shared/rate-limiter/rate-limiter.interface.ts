@@ -1,6 +1,6 @@
 import { Provider } from '@nestjs/common';
 import { ModuleMetadata, Type } from '@nestjs/common/interfaces';
-import { RateLimiterAbstract, RateLimiterRes } from 'rate-limiter-flexible';
+import { RateLimiterAbstract } from 'rate-limiter-flexible';
 
 export interface RateLimiterOptions {
   /**
@@ -70,10 +70,6 @@ export interface RateLimiterOptions {
    * @default true
    */
   logger?: boolean;
-  /**
-   * @description Custom handler for generating HTTP response body to be returned.
-   */
-  customResponseSchema?: (rateLimiterResponse: RateLimiterRes) => unknown;
 }
 
 export interface RateLimiterOptionsFactory {

@@ -17,7 +17,10 @@ import {
 } from 'rate-limiter-flexible';
 import { RateLimiterOptions } from './rate-limiter.interface';
 import { defaultRateLimiterOptions } from './default-options';
-import { RATE_LIMITER_METADATA } from './rate-limiter.constants';
+import {
+  RATE_LIMITER_METADATA,
+  RATE_LIMITER_SKIP,
+} from './rate-limiter.constants';
 
 @Injectable()
 export class RateLimiterGuard implements CanActivate {
@@ -90,6 +93,17 @@ export class RateLimiterGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const handler = context.getHandler();
     const classRef = context.getClass();
+
+    // Return early if the current route should be skipped.
+    if (
+      this.reflector.getAllAndOverride<boolean>(RATE_LIMITER_SKIP, [
+        handler,
+        classRef,
+      ])
+    ) {
+      return true;
+    }
+
     const opts = this.reflector.getAllAndOverride<RateLimiterOptions>(
       RATE_LIMITER_METADATA,
       [handler, classRef],
@@ -105,7 +119,7 @@ export class RateLimiterGuard implements CanActivate {
     return true;
   }
 
-  private getTracker(request: Record<string, any>): string {
+  protected getTracker(request: Record<string, any>): string {
     return request.ip?.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/)?.[0];
   }
 
@@ -149,17 +163,10 @@ export class RateLimiterGuard implements CanActivate {
         'Retry-After',
         Math.ceil(rateLimiterResponse.msBeforeNext / 1000),
       );
-      if (typeof this.options.customResponseSchema === 'function') {
-        throw new HttpException(
-          this.options.customResponseSchema(rateLimiterResponse),
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      } else {
-        throw new HttpException(
-          this.options.errorMessage,
-          HttpStatus.TOO_MANY_REQUESTS,
-        );
-      }
+      throw new HttpException(
+        this.options.errorMessage,
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
   }
 }
