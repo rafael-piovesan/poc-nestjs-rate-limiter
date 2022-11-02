@@ -22,7 +22,7 @@ export const RateLimit = (
 ): MethodDecorator & ClassDecorator => {
   return (
     target: any,
-    propertyKey?: string | symbol,
+    _propertyKey?: string | symbol,
     descriptor?: TypedPropertyDescriptor<any>,
   ) => {
     if (descriptor) {
@@ -46,7 +46,7 @@ export const SkipRateLimit = (
 ): MethodDecorator & ClassDecorator => {
   return (
     target: any,
-    propertyKey?: string | symbol,
+    _propertyKey?: string | symbol,
     descriptor?: TypedPropertyDescriptor<any>,
   ) => {
     if (descriptor) {
