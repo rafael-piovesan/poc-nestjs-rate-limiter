@@ -3,7 +3,6 @@ import { Module } from '@nestjs/common';
 import { RateLimiterModule } from 'shared/rate-limiter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { RateLimitedController } from './rate-limited.controller';
 
 @Module({
   imports: [
@@ -27,7 +26,7 @@ import { RateLimitedController } from './rate-limited.controller';
       },
     }),
   ],
-  controllers: [AppController, RateLimitedController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
