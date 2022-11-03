@@ -30,4 +30,14 @@ export class AppController {
   getRateLimited(): string {
     return this.appService.getHello();
   }
+
+  @RateLimit({
+    points: 2,
+    duration: 120,
+    tracker: 'body.my_prop',
+  })
+  @Get('/tracker-from-body')
+  getTrackerFromBody(): string {
+    return this.appService.getHello();
+  }
 }

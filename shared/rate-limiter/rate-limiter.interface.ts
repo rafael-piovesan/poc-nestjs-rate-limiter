@@ -2,6 +2,10 @@ import { Provider } from '@nestjs/common';
 import { ModuleMetadata, Type } from '@nestjs/common/interfaces';
 import { RateLimiterAbstract } from 'rate-limiter-flexible';
 
+export type RateLimiterTrackerGenerator = (
+  req: Record<string, any>,
+) => string | undefined;
+
 export interface RateLimiterOptions {
   /**
    * @description If you need to create several limiters for different purposes.
@@ -66,10 +70,22 @@ export interface RateLimiterOptions {
    */
   errorMessage?: string;
   /**
-   * @description Wether logging should be enabled or not.
+   * @description Whether logging should be enabled or not.
    * @default true
    */
   logger?: boolean;
+  /**
+   * @description The Request object's properties lookup path or function to be
+   * used while generating key to be tracked for rate limiting.
+   * @default 'req.ip'
+   */
+  tracker?: string | RateLimiterTrackerGenerator;
+  /**
+   * @description Whether or not to skip rate limiting policy in case it
+   * was not possible to get the tracker to be used as the throttling key.
+   * @default false
+   */
+  skipMissingTracker?: boolean;
 }
 
 export interface RateLimiterOptionsFactory {

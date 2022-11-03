@@ -21,6 +21,7 @@ import {
   RATE_LIMITER_METADATA,
   RATE_LIMITER_SKIP,
 } from './rate-limiter.constants';
+import { resolvePath } from './rate-limiter.utils';
 
 @Injectable()
 export class RateLimiterGuard implements CanActivate {
@@ -109,11 +110,19 @@ export class RateLimiterGuard implements CanActivate {
       [handler, classRef],
     );
 
-    const points = opts?.points || this.options.points;
-
     const { req, res } = this.httpHandler(context);
+    const key = this.generateKey(req, opts);
+
+    const skipMissing =
+      opts?.skipMissingTracker || this.options.skipMissingTracker;
+
+    // Return early if a missing tracker should be skipped.
+    if (!key && skipMissing) {
+      return true;
+    }
+
     const rateLimiter = await this.getRateLimiter(opts);
-    const key = this.getTracker(req);
+    const points = opts?.points || this.options.points;
 
     await this.responseHandler(res, key, rateLimiter, points);
     return true;
@@ -121,6 +130,18 @@ export class RateLimiterGuard implements CanActivate {
 
   protected getTracker(req: Record<string, any>): string {
     return req.ip?.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/)?.[0];
+  }
+
+  private generateKey(req: Record<string, any>, opts: RateLimiterOptions) {
+    const customTracker = opts?.tracker || this.options.tracker;
+    switch (typeof customTracker) {
+      case 'string':
+        return resolvePath(customTracker, req);
+      case 'function':
+        return customTracker(req);
+      default:
+        return this.getTracker(req);
+    }
   }
 
   private httpHandler(context: ExecutionContext) {
