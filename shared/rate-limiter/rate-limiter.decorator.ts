@@ -4,10 +4,6 @@ import {
 } from './rate-limiter.constants';
 import { RateLimiterOptions } from './rate-limiter.interface';
 
-function setThrottlerMetadata(target: any, options: RateLimiterOptions): void {
-  Reflect.defineMetadata(RATE_LIMITER_METADATA, options, target);
-}
-
 /**
  * Adds metadata to the target which will be handled by the RateLimiterGuard to
  * handle incoming requests based on the given metadata.
@@ -26,10 +22,10 @@ export const RateLimit = (
     descriptor?: TypedPropertyDescriptor<any>,
   ) => {
     if (descriptor) {
-      setThrottlerMetadata(descriptor.value, options);
+      Reflect.defineMetadata(RATE_LIMITER_METADATA, options, descriptor.value);
       return descriptor;
     }
-    setThrottlerMetadata(target, options);
+    Reflect.defineMetadata(RATE_LIMITER_METADATA, options, target);
     return target;
   };
 };
