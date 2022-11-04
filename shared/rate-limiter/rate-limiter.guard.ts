@@ -113,11 +113,10 @@ export class RateLimiterGuard implements CanActivate {
     const { req, res } = this.httpHandler(context);
     const key = this.generateKey(req, opts);
 
-    const skipMissing =
-      opts?.skipMissingTracker || this.options.skipMissingTracker;
+    const skipIfMissing = opts?.skipIfMissing || this.options.skipIfMissing;
 
     // Return early if a missing tracker should be skipped.
-    if (!key && skipMissing) {
+    if (!key && skipIfMissing) {
       return true;
     }
 

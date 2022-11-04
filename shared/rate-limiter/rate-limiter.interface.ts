@@ -85,7 +85,7 @@ export interface RateLimiterOptions {
    * was not possible to get the tracker to be used as the throttling key.
    * @default false
    */
-  skipMissingTracker?: boolean;
+  skipIfMissing?: boolean;
 }
 
 export interface RateLimiterOptionsFactory {
